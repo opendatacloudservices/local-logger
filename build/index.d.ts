@@ -2,11 +2,8 @@
 import { Response } from 'express';
 export declare const tokenKey = "log___token";
 export declare const tokenKeyParent = "log___tokenParent";
-export declare const token: (id?: string | undefined) => {
-    [tokenKey]: string;
-};
-export declare const tokenUrl: (id?: string | undefined) => string;
-export declare const addToken: (url: string, id?: string | undefined) => string;
+export declare const tokenUrl: (id: string) => string;
+export declare const addToken: (url: string, res: Response) => string;
 export declare const getToken: (req: {
     query: {
         [tokenKey]?: string;

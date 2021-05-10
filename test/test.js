@@ -6,11 +6,10 @@ const {
   logInfo,
   startSpan,
   uuid,
-  token,
   tokenRoute,
-  tokenUrl,
   addToken,
   tokenKey,
+  tokenUrl,
 } = require('../build/index');
 const fetch = require('node-fetch');
 const express = require('express');
@@ -82,7 +81,7 @@ test('logError', async() => {
   });
 });
 
-test('logRoute, logRouteResult and tokenRoute', async() => {
+test('logRoute and tokenRoute', async() => {
 
   await new Promise((resolve, reject) => {
     const id = uuid();
@@ -214,20 +213,14 @@ test('Transaction', async() => {
   });
 });
 
-test('token', async() => {
-  const t1 = token();
-  expect(typeof t1).toBe('object');
-  expect(t1).toHaveProperty('log___token');
-  expect(t1.log___token.length).toBe(36);
-  expect(typeof t1.log___token).toBe('string');
-});
-
 test('addToken', async() => {
   const url1 = 'https://www.test.org'
   const url2 = 'https://www.test.org?id=5'
   const t = uuid();
-  const tokenUrl1 = addToken(url1, t);
-  const tokenUrl2 = addToken(url2, t);
+  const res = {locals: {}};
+  res.locals[tokenKey] = t;
+  const tokenUrl1 = addToken(url1, res);
+  const tokenUrl2 = addToken(url2, res);
   expect(tokenUrl1).toBe(url1 + '?' + tokenKey + '=' + t)  ;
   expect(tokenUrl2).toBe(url2 + '&' + tokenKey + '=' + t)  ;
 });

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.uuid = exports.startTransaction = exports.startSpan = exports.logError = exports.logInfo = exports.logRouteError = exports.logRoute = exports.tokenRoute = exports.getTokenParent = exports.getToken = exports.addToken = exports.tokenUrl = exports.token = exports.tokenKeyParent = exports.tokenKey = void 0;
+exports.uuid = exports.startTransaction = exports.startSpan = exports.logError = exports.logInfo = exports.logRouteError = exports.logRoute = exports.tokenRoute = exports.getTokenParent = exports.getToken = exports.addToken = exports.tokenUrl = exports.tokenKeyParent = exports.tokenKey = void 0;
 Error.stackTraceLimit = Infinity;
 const dotenv = require("dotenv");
 const path = require("path");
@@ -17,35 +17,16 @@ const logger = winston.createLogger({
 });
 exports.tokenKey = 'log___token';
 exports.tokenKeyParent = 'log___tokenParent';
-const token = (id) => {
-    const t = { log___token: '' };
-    if (id) {
-        t[exports.tokenKey] = id;
-    }
-    else {
-        t[exports.tokenKey] = exports.uuid();
-    }
-    return t;
-};
-exports.token = token;
 const tokenUrl = (id) => {
-    if (id) {
-        return exports.tokenKey + '=' + id;
-    }
-    else {
-        return exports.tokenKey + '=' + exports.uuid();
-    }
+    return exports.tokenKey + '=' + id;
 };
 exports.tokenUrl = tokenUrl;
-const addToken = (url, id) => {
-    if (!id) {
-        id = exports.uuid();
-    }
+const addToken = (url, res) => {
     if (url.indexOf('?') > -1) {
-        url = url += '&' + exports.tokenUrl(id);
+        url = url += '&' + exports.tokenUrl(res.locals[exports.tokenKey]);
     }
     else {
-        url = url += '?' + exports.tokenUrl(id);
+        url = url += '?' + exports.tokenUrl(res.locals[exports.tokenKey]);
     }
     return url;
 };
@@ -71,11 +52,13 @@ exports.getTokenParent = getTokenParent;
 const tokenRoute = (req, res, next) => {
     if (req.query && req.query[exports.tokenKey]) {
         req.query[exports.tokenKeyParent] = req.query[exports.tokenKey] || '';
+        res.locals[exports.tokenKeyParent] = req.query[exports.tokenKeyParent];
     }
     if (!('query' in req) || !req.query) {
         req.query = {};
     }
     req.query[exports.tokenKey] = exports.uuid();
+    res.locals[exports.tokenKey] = req.query[exports.tokenKey];
     if (!('start' in res.locals) || !res.locals.start) {
         res.locals.start = new Date().getTime();
     }

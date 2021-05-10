@@ -21,32 +21,15 @@ const logger = winston.createLogger({
 export const tokenKey = 'log___token';
 export const tokenKeyParent = 'log___tokenParent';
 
-export const token = (id?: string): {[tokenKey]: string} => {
-  const t: {[tokenKey]: string} = {log___token: ''};
-  if (id) {
-    t[tokenKey] = id;
-  } else {
-    t[tokenKey] = uuid();
-  }
-  return t;
+export const tokenUrl = (id: string): string => {
+  return tokenKey + '=' + id;
 };
 
-export const tokenUrl = (id?: string): string => {
-  if (id) {
-    return tokenKey + '=' + id;
-  } else {
-    return tokenKey + '=' + uuid();
-  }
-};
-
-export const addToken = (url: string, id?: string): string => {
-  if (!id) {
-    id = uuid();
-  }
+export const addToken = (url: string, res: Response): string => {
   if (url.indexOf('?') > -1) {
-    url = url += '&' + tokenUrl(id);
+    url = url += '&' + tokenUrl(res.locals[tokenKey]);
   } else {
-    url = url += '?' + tokenUrl(id);
+    url = url += '?' + tokenUrl(res.locals[tokenKey]);
   }
   return url;
 };
@@ -76,12 +59,14 @@ export const tokenRoute = (
 ) => {
   if (req.query && req.query[tokenKey]) {
     req.query[tokenKeyParent] = req.query[tokenKey] || '';
+    res.locals[tokenKeyParent] = req.query[tokenKeyParent];
   }
 
   if (!('query' in req) || !req.query) {
     req.query = {};
   }
   req.query[tokenKey] = uuid();
+  res.locals[tokenKey] = req.query[tokenKey];
 
   if (!('start' in res.locals) || !res.locals.start) {
     res.locals.start = new Date().getTime();
