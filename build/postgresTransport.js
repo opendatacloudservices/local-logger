@@ -60,6 +60,7 @@ class PostgresTransport extends Transport {
             'meta' in info ? info.meta.expressQuery || null : null,
             'meta' in info ? info.meta.expressOrigin || null : null,
             process.env.NODE_ENV || 'unknown',
+            process.env.SERVICE_NAME || 'unknown',
         ];
         [
             'type',
@@ -93,7 +94,8 @@ class PostgresTransport extends Transport {
           express_method,
           express_query,
           express_origin,
-          env
+          env,
+          service
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`, parameters)
             .then(() => {
             if (callback) {
