@@ -18,6 +18,10 @@ export declare class PostgresTransport extends Transport {
             expressOrigin?: string;
             token?: string;
             tokenParent?: string;
+            duration?: number;
+            stack?: string;
+            error?: string;
+            message?: string;
         };
     } & {
         [key: string]: string | {} | string[] | boolean | number | undefined;

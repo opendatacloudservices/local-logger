@@ -6,19 +6,19 @@ const pg_1 = require("pg");
 class PostgresTransport extends Transport {
     constructor(opts) {
         super(opts);
-        if (!('PGUSER' in process.env) ||
-            !('PGHOST' in process.env) ||
-            !('PGDATABASE' in process.env) ||
-            !('PGPASSWORD' in process.env)) {
+        if (!('LOGGER_PGUSER' in process.env) ||
+            !('LOGGER_PGHOST' in process.env) ||
+            !('LOGGER_PGDATABASE' in process.env) ||
+            !('LOGGER_PGPASSWORD' in process.env)) {
             throw Error('Missing environmental variables for database connection');
         }
         // connect to postgres (via env vars params)
         this.client = new pg_1.Client({
-            user: process.env.PGUSER,
-            host: process.env.PGHOST,
-            database: process.env.PGDATABASE,
-            password: process.env.PGPASSWORD,
-            port: parseInt(process.env.PGPORT || '5432'),
+            user: process.env.LOGGER_PGUSER,
+            host: process.env.LOGGER_PGHOST,
+            database: process.env.LOGGER_PGDATABASE,
+            password: process.env.LOGGER_PGPASSWORD,
+            port: parseInt(process.env.LOGGER_PGPORT || '5432'),
         });
         this.client.connect();
     }
@@ -26,7 +26,11 @@ class PostgresTransport extends Transport {
         setImmediate(() => {
             this.emit('logged', info);
         });
-        const stack = new Error().stack || '';
+        let stack = new Error().stack || '';
+        if ('meta' in info && 'stack' in info.meta && 'error' in info.meta) {
+            info.message = info.meta.message || info.meta.error || '';
+            stack = info.meta.stack || '';
+        }
         const fullStack = stack
             .split('\n')
             .map(line => line.trim())
@@ -44,7 +48,7 @@ class PostgresTransport extends Transport {
         const parameters = [
             info.type || 'unknown',
             null,
-            info.duration || 0,
+            info.duration || ('meta' in info ? info.meta.duration : 0) || 0,
             info.success || null,
             lightStack || null,
             fullStack || null,
@@ -76,7 +80,7 @@ class PostgresTransport extends Transport {
         });
         parameters[1] = info;
         this.client
-            .query(`INSERT INTO logs (
+            .query(`INSERT INTO "Logs" (
           type,
           message,
           transaction_duration,

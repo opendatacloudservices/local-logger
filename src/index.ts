@@ -4,6 +4,7 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as winston from 'winston';
 import * as express from 'express-winston';
+import {Request, Response} from 'express';
 import {PostgresTransport} from './postgresTransport';
 import {v1 as uuidv1} from 'uuid';
 
@@ -17,8 +18,8 @@ const logger = winston.createLogger({
   transports: [transport],
 });
 
-const tokenKey = 'log___token';
-const tokenKeyParent = 'log___tokenParent';
+export const tokenKey = 'log___token';
+export const tokenKeyParent = 'log___tokenParent';
 
 export const token = (id?: string): {[tokenKey]: string} => {
   const t: {[tokenKey]: string} = {log___token: ''};
@@ -36,6 +37,18 @@ export const tokenUrl = (id?: string): string => {
   } else {
     return tokenKey + '=' + uuid();
   }
+};
+
+export const addToken = (url: string, id?: string): string => {
+  if (!id) {
+    id = uuid();
+  }
+  if (url.indexOf('?') > -1) {
+    url = url += '&' + tokenUrl(id);
+  } else {
+    url = url += '?' + tokenUrl(id);
+  }
+  return url;
 };
 
 export const getToken = (req: {query: {[tokenKey]?: string}}): string => {
@@ -58,7 +71,7 @@ export const getTokenParent = (req: {
 
 export const tokenRoute = (
   req: {query?: {[tokenKey]?: string; [tokenKeyParent]?: string}},
-  _res: {},
+  res: Response,
   next: Function
 ) => {
   if (req.query && req.query[tokenKey]) {
@@ -70,51 +83,81 @@ export const tokenRoute = (
   }
   req.query[tokenKey] = uuid();
 
+  if (!('start' in res.locals) || !res.locals.start) {
+    res.locals.start = new Date().getTime();
+  }
+
   next();
+};
+
+const dynamicMeta = (req: Request, res: Response) => {
+  const meta: {
+    expressOrigin: string | undefined;
+    expressRoute: string | undefined;
+    expressMethod: string | undefined;
+    expressQuery: {} | undefined;
+    token: string | undefined;
+    tokenParent: string | undefined;
+    duration?: number;
+    resultCode?: number;
+    resultBody?: string | {};
+  } = {
+    expressOrigin: undefined,
+    expressRoute: req.url || undefined,
+    expressMethod: req.method || undefined,
+    expressQuery: req.query || undefined,
+    token:
+      req.query && req.query[tokenKey]
+        ? req.query[tokenKey]?.toString()
+        : undefined,
+    tokenParent:
+      req.query && req.query[tokenKeyParent]
+        ? req.query[tokenKeyParent]?.toString()
+        : undefined,
+  };
+
+  const now = new Date().getTime();
+  meta.duration = Math.abs(now - res.locals.start);
+
+  if (res.statusCode) {
+    meta.resultCode = res.statusCode;
+  }
+
+  if (res.json) {
+    meta.resultBody = res.json;
+  }
+
+  const protocol = req.protocol;
+  const hostHeaderIndex = req.rawHeaders.indexOf('Host') + 1;
+  const host = hostHeaderIndex ? req.rawHeaders[hostHeaderIndex] : undefined;
+
+  if (host) {
+    meta.expressOrigin = protocol + '://' + host;
+  } else {
+    meta.expressOrigin = req.headers.referer
+      ? req.headers.referer.substring(0, req.headers.referer.length - 1)
+      : undefined;
+  }
+
+  return meta;
 };
 
 export const logRoute = express.logger({
   transports: [transport],
+  format: winston.format.json(),
   baseMeta: {
-    type: 'express',
+    type: 'express-logRoute',
   },
-  dynamicMeta: req => {
-    const meta: {
-      expressOrigin: string | undefined;
-      expressRoute: string | undefined;
-      expressMethod: string | undefined;
-      expressQuery: {} | undefined;
-      token: string | undefined;
-      tokenParent: string | undefined;
-    } = {
-      expressOrigin: undefined,
-      expressRoute: req.url || undefined,
-      expressMethod: req.method || undefined,
-      expressQuery: req.query || undefined,
-      token:
-        req.query && req.query[tokenKey]
-          ? req.query[tokenKey]?.toString()
-          : undefined,
-      tokenParent:
-        req.query && req.query[tokenKeyParent]
-          ? req.query[tokenKeyParent]?.toString()
-          : undefined,
-    };
+  dynamicMeta: (req, res) => dynamicMeta(req, res),
+});
 
-    const protocol = req.protocol;
-    const hostHeaderIndex = req.rawHeaders.indexOf('Host') + 1;
-    const host = hostHeaderIndex ? req.rawHeaders[hostHeaderIndex] : undefined;
-
-    if (host) {
-      meta.expressOrigin = protocol + '://' + host;
-    } else {
-      meta.expressOrigin = req.headers.referer
-        ? req.headers.referer.substring(0, req.headers.referer.length - 1)
-        : undefined;
-    }
-
-    return meta;
+export const logRouteError = express.errorLogger({
+  transports: [transport],
+  format: winston.format.json(),
+  baseMeta: {
+    type: 'express-logRouteError',
   },
+  dynamicMeta: (req, res) => dynamicMeta(req, res),
 });
 
 export const logInfo = (message: {}) => {
