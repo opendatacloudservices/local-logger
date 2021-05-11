@@ -101,7 +101,10 @@ export class PostgresTransport extends Transport {
       info.type ||
         ('meta' in info && info.meta && 'type' in info.meta
           ? info.meta.type
-          : 'message' in info && info.message && 'type' in info.message
+          : 'message' in info &&
+            info.message &&
+            typeof info.message === 'object' &&
+            'type' in info.message
           ? info.message.type
           : 'unknown'),
       null,
@@ -110,7 +113,10 @@ export class PostgresTransport extends Transport {
       info.transactionId ||
         ('meta' in info && info.meta && 'transactionId' in info.meta
           ? info.meta.transactionId
-          : 'message' in info && info.message && 'transactionId' in info.message
+          : 'message' in info &&
+            info.message &&
+            typeof info.message === 'object' &&
+            'transactionId' in info.message
           ? info.message.transactionId
           : 'unknown'),
       lightStack || null,
@@ -120,7 +126,9 @@ export class PostgresTransport extends Transport {
         ('meta' in info
           ? info.meta.token ||
             info.meta[tokenKey] ||
-            ('message' in info && info.message
+            ('message' in info &&
+            info.message &&
+            typeof info.message === 'object'
               ? info.message.token || info.message[tokenKey] || null
               : null)
           : null),
@@ -129,7 +137,9 @@ export class PostgresTransport extends Transport {
         ('meta' in info
           ? info.meta.tokenParent ||
             info.meta[tokenKeyParent] ||
-            ('message' in info && info.message
+            ('message' in info &&
+            info.message &&
+            typeof info.message === 'object'
               ? info.message.tokenParent || info.message[tokenKeyParent] || null
               : null)
           : null),

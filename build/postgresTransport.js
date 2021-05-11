@@ -52,11 +52,15 @@ class PostgresTransport extends Transport {
                 stack_end = true;
             }
         }
+        console.log(info);
         const parameters = [
             info.type ||
                 ('meta' in info && info.meta && 'type' in info.meta
                     ? info.meta.type
-                    : 'message' in info && info.message && 'type' in info.message
+                    : 'message' in info &&
+                        info.message &&
+                        typeof info.message === 'object' &&
+                        'type' in info.message
                         ? info.message.type
                         : 'unknown'),
             null,
@@ -65,7 +69,10 @@ class PostgresTransport extends Transport {
             info.transactionId ||
                 ('meta' in info && info.meta && 'transactionId' in info.meta
                     ? info.meta.transactionId
-                    : 'message' in info && info.message && 'transactionId' in info.message
+                    : 'message' in info &&
+                        info.message &&
+                        typeof info.message === 'object' &&
+                        'transactionId' in info.message
                         ? info.message.transactionId
                         : 'unknown'),
             lightStack || null,
@@ -75,7 +82,9 @@ class PostgresTransport extends Transport {
                 ('meta' in info
                     ? info.meta.token ||
                         info.meta[index_1.tokenKey] ||
-                        ('message' in info && info.message
+                        ('message' in info &&
+                            info.message &&
+                            typeof info.message === 'object'
                             ? info.message.token || info.message[index_1.tokenKey] || null
                             : null)
                     : null),
@@ -84,7 +93,9 @@ class PostgresTransport extends Transport {
                 ('meta' in info
                     ? info.meta.tokenParent ||
                         info.meta[index_1.tokenKeyParent] ||
-                        ('message' in info && info.message
+                        ('message' in info &&
+                            info.message &&
+                            typeof info.message === 'object'
                             ? info.message.tokenParent || info.message[index_1.tokenKeyParent] || null
                             : null)
                     : null),
