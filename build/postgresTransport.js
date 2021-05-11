@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostgresTransport = void 0;
 const Transport = require("winston-transport");
 const pg_1 = require("pg");
+const index_1 = require("./index");
 class PostgresTransport extends Transport {
     constructor(opts) {
         super(opts);
@@ -22,13 +23,19 @@ class PostgresTransport extends Transport {
         });
         this.client.connect();
     }
-    log(info, callback) {
+    log(pInfo, callback) {
+        // creating a copy of the original message to make sure, transactions stay alive
+        const info = JSON.parse(JSON.stringify(pInfo));
         setImmediate(() => {
             this.emit('logged', info);
         });
-        let stack = new Error().stack || '';
+        let stack = info.stack ? info.stack.join('\n') : '';
         if ('meta' in info && 'stack' in info.meta && 'error' in info.meta) {
-            info.message = info.meta.message || info.meta.error || '';
+            info.message = info.meta.message
+                ? info.meta.message
+                : info.meta.error
+                    ? { error: info.meta.error }
+                    : { message: '' };
             stack = info.meta.stack || '';
         }
         const fullStack = stack
@@ -46,19 +53,31 @@ class PostgresTransport extends Transport {
             }
         }
         const parameters = [
-            info.type || 'unknown',
+            info.type ||
+                ('meta' in info && info.meta && 'type' in info.meta
+                    ? info.meta.type
+                    : 'message' in info && info.message && 'type' in info.message
+                        ? info.message.type
+                        : 'unknown'),
             null,
             info.duration || ('meta' in info ? info.meta.duration : 0) || 0,
             info.success || null,
             lightStack || null,
             fullStack || null,
-            info.token || ('meta' in info ? info.meta.token || null : null),
+            info.token ||
+                info[index_1.tokenKey] ||
+                ('meta' in info
+                    ? info.meta.token || info.meta[index_1.tokenKey] || null
+                    : null),
             info.tokenParent ||
-                ('meta' in info ? info.meta.tokenParent || null : null),
-            'meta' in info ? info.meta.expressRoute || null : null,
-            'meta' in info ? info.meta.expressMethod || null : null,
-            'meta' in info ? info.meta.expressQuery || null : null,
-            'meta' in info ? info.meta.expressOrigin || null : null,
+                info[index_1.tokenKeyParent] ||
+                ('meta' in info
+                    ? info.meta.tokenParent || info.meta[index_1.tokenKeyParent] || null
+                    : null),
+            'meta' in info ? info.meta.expressRoute : null,
+            'meta' in info ? info.meta.expressMethod : null,
+            'meta' in info ? info.meta.expressQuery : null,
+            'meta' in info ? info.meta.expressOrigin : null,
             process.env.NODE_ENV || 'unknown',
             process.env.SERVICE_NAME || 'unknown',
         ];

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.uuid = exports.startTransaction = exports.startSpan = exports.logError = exports.logInfo = exports.logRouteError = exports.logRoute = exports.tokenRoute = exports.getTokenParent = exports.getToken = exports.addToken = exports.tokenUrl = exports.tokenKeyParent = exports.tokenKey = void 0;
+exports.uuid = exports.startTransaction = exports.startSpan = exports.logError = exports.logInfo = exports.logRouteError = exports.logRoute = exports.dynamicMeta = exports.tokenRoute = exports.getTokenParent = exports.getToken = exports.addToken = exports.tokenUrl = exports.localTokens = exports.tokenKeyParent = exports.tokenKey = void 0;
 Error.stackTraceLimit = Infinity;
 const dotenv = require("dotenv");
 const path = require("path");
@@ -17,6 +17,17 @@ const logger = winston.createLogger({
 });
 exports.tokenKey = 'log___token';
 exports.tokenKeyParent = 'log___tokenParent';
+const localTokens = (res) => {
+    const tokens = {};
+    if (exports.tokenKey in res.locals) {
+        tokens[exports.tokenKey] = res.locals[exports.tokenKey];
+    }
+    if (exports.tokenKeyParent in res.locals) {
+        tokens[exports.tokenKeyParent] = res.locals[exports.tokenKeyParent];
+    }
+    return tokens;
+};
+exports.localTokens = localTokens;
 const tokenUrl = (id) => {
     return exports.tokenKey + '=' + id;
 };
@@ -66,16 +77,13 @@ const tokenRoute = (req, res, next) => {
 };
 exports.tokenRoute = tokenRoute;
 const dynamicMeta = (req, res) => {
-    var _a, _b;
     const meta = {
         expressOrigin: undefined,
         expressRoute: req.url || undefined,
         expressMethod: req.method || undefined,
         expressQuery: req.query || undefined,
-        token: req.query && req.query[exports.tokenKey]
-            ? (_a = req.query[exports.tokenKey]) === null || _a === void 0 ? void 0 : _a.toString() : undefined,
-        tokenParent: req.query && req.query[exports.tokenKeyParent]
-            ? (_b = req.query[exports.tokenKeyParent]) === null || _b === void 0 ? void 0 : _b.toString() : undefined,
+        token: res.locals[exports.tokenKey] || '',
+        tokenParent: res.locals[exports.tokenKeyParent] || '',
     };
     const now = new Date().getTime();
     meta.duration = Math.abs(now - res.locals.start);
@@ -98,13 +106,14 @@ const dynamicMeta = (req, res) => {
     }
     return meta;
 };
+exports.dynamicMeta = dynamicMeta;
 exports.logRoute = express.logger({
     transports: [transport],
     format: winston.format.json(),
     baseMeta: {
         type: 'express-logRoute',
     },
-    dynamicMeta: (req, res) => dynamicMeta(req, res),
+    dynamicMeta: (req, res) => exports.dynamicMeta(req, res),
 });
 exports.logRouteError = express.errorLogger({
     transports: [transport],
@@ -112,7 +121,7 @@ exports.logRouteError = express.errorLogger({
     baseMeta: {
         type: 'express-logRouteError',
     },
-    dynamicMeta: (req, res) => dynamicMeta(req, res),
+    dynamicMeta: (req, res) => exports.dynamicMeta(req, res),
 });
 const logInfo = (message) => {
     logger.info({ ...message, type: 'info' });
@@ -125,17 +134,20 @@ exports.logError = logError;
 const startSpan = (message) => {
     const meta = {
         ...message,
-        type: 'transaction',
+        type: 'transaction-start',
         start: new Date(),
         end: new Date(),
         duration: 0,
+        transactionId: exports.uuid(),
         success: false,
     };
+    logger.info(meta);
     return (success, message) => {
         const log = message ? { ...message, ...meta } : meta;
         log.end = new Date();
         log.duration = log.end.getTime() - log.start.getTime();
         log.success = success;
+        log.type = 'transaction-end';
         if (success) {
             logger.info(log);
         }

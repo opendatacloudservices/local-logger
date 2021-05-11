@@ -1,5 +1,6 @@
 import * as Transport from 'winston-transport';
 import {Client} from 'pg';
+import {tokenKey, tokenKeyParent} from './index';
 
 export class PostgresTransport extends Transport {
   client: Client;
@@ -29,7 +30,7 @@ export class PostgresTransport extends Transport {
   }
 
   log(
-    info: {
+    pInfo: {
       type: string;
       duration?: number;
       success?: boolean;
@@ -37,6 +38,9 @@ export class PostgresTransport extends Transport {
       fullStack?: string[];
       token?: string;
       tokenParent?: string;
+      message?: {
+        [key: string]: string;
+      };
       meta: {
         expressRoute?: string;
         expressMethod?: string;
@@ -47,20 +51,32 @@ export class PostgresTransport extends Transport {
         duration?: number;
         stack?: string;
         error?: string;
-        message?: string;
+        message?: {
+          [key: string]: string;
+        };
+        type?: string;
+        [tokenKey]?: string;
+        [tokenKeyParent]?: string;
       };
     } & {
       [key: string]: string | {} | string[] | boolean | number | undefined;
     },
     callback: Function | null
   ) {
+    // creating a copy of the original message to make sure, transactions stay alive
+    const info = JSON.parse(JSON.stringify(pInfo));
+
     setImmediate(() => {
       this.emit('logged', info);
     });
 
-    let stack: string = new Error().stack || '';
+    let stack: string = info.stack ? info.stack.join('\n') : '';
     if ('meta' in info && 'stack' in info.meta && 'error' in info.meta) {
-      info.message = info.meta.message || info.meta.error || '';
+      info.message = info.meta.message
+        ? info.meta.message
+        : info.meta.error
+        ? {error: info.meta.error}
+        : {message: ''};
       stack = info.meta.stack || '';
     }
 
@@ -80,19 +96,31 @@ export class PostgresTransport extends Transport {
     }
 
     const parameters = [
-      info.type || 'unknown',
+      info.type ||
+        ('meta' in info && info.meta && 'type' in info.meta
+          ? info.meta.type
+          : 'message' in info && info.message && 'type' in info.message
+          ? info.message.type
+          : 'unknown'),
       null,
       info.duration || ('meta' in info ? info.meta.duration : 0) || 0,
       info.success || null,
       lightStack || null,
       fullStack || null,
-      info.token || ('meta' in info ? info.meta.token || null : null),
+      info.token ||
+        info[tokenKey] ||
+        ('meta' in info
+          ? info.meta.token || info.meta[tokenKey] || null
+          : null),
       info.tokenParent ||
-        ('meta' in info ? info.meta.tokenParent || null : null),
-      'meta' in info ? info.meta.expressRoute || null : null,
-      'meta' in info ? info.meta.expressMethod || null : null,
-      'meta' in info ? info.meta.expressQuery || null : null,
-      'meta' in info ? info.meta.expressOrigin || null : null,
+        info[tokenKeyParent] ||
+        ('meta' in info
+          ? info.meta.tokenParent || info.meta[tokenKeyParent] || null
+          : null),
+      'meta' in info ? info.meta.expressRoute : null,
+      'meta' in info ? info.meta.expressMethod : null,
+      'meta' in info ? info.meta.expressQuery : null,
+      'meta' in info ? info.meta.expressOrigin : null,
       process.env.NODE_ENV || 'unknown',
       process.env.SERVICE_NAME || 'unknown',
     ];

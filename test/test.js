@@ -201,9 +201,10 @@ test('Transaction', async() => {
             expect(typeof result.rows[0].message).toBe('object');
             expect(result.rows[0].message.message).toBe(message);
             expect(result.rows[0].message.id).toBe(id);
-            expect(result.rows[0].type).toBe('transaction');
-            expect(result.rows[0].transaction_success).toBe(true);
-            expect(parseInt(result.rows[0].transaction_duration)).toBeGreaterThanOrEqual(delay);
+            expect(result.rows[0].type).toBe('transaction-start');
+            expect(result.rows[1].type).toBe('transaction-end');
+            expect(result.rows[1].transaction_success).toBe(true);
+            expect(parseInt(result.rows[1].transaction_duration)).toBeGreaterThanOrEqual(delay);
             resolve();
           }).catch((err) => {
             reject(err);
