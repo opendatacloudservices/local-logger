@@ -52,7 +52,6 @@ class PostgresTransport extends Transport {
                 stack_end = true;
             }
         }
-        console.log(info);
         const parameters = [
             info.type ||
                 ('meta' in info && info.meta && 'type' in info.meta
@@ -74,7 +73,7 @@ class PostgresTransport extends Transport {
                         typeof info.message === 'object' &&
                         'transactionId' in info.message
                         ? info.message.transactionId
-                        : 'unknown'),
+                        : null),
             lightStack || null,
             fullStack || null,
             info.token ||

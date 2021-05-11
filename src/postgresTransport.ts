@@ -118,7 +118,7 @@ export class PostgresTransport extends Transport {
             typeof info.message === 'object' &&
             'transactionId' in info.message
           ? info.message.transactionId
-          : 'unknown'),
+          : null),
       lightStack || null,
       fullStack || null,
       info.token ||
