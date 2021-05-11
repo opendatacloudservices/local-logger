@@ -31,6 +31,7 @@ export class PostgresTransport extends Transport {
 
   log(
     pInfo: {
+      transactionId?: string;
       type: string;
       duration?: number;
       success?: boolean;
@@ -42,6 +43,7 @@ export class PostgresTransport extends Transport {
         [key: string]: string;
       };
       meta: {
+        transactionId?: string;
         expressRoute?: string;
         expressMethod?: string;
         expressQuery?: {};
@@ -105,17 +107,31 @@ export class PostgresTransport extends Transport {
       null,
       info.duration || ('meta' in info ? info.meta.duration : 0) || 0,
       info.success || null,
+      info.transactionId ||
+        ('meta' in info && info.meta && 'transactionId' in info.meta
+          ? info.meta.transactionId
+          : 'message' in info && info.message && 'transactionId' in info.message
+          ? info.message.transactionId
+          : 'unknown'),
       lightStack || null,
       fullStack || null,
       info.token ||
         info[tokenKey] ||
         ('meta' in info
-          ? info.meta.token || info.meta[tokenKey] || null
+          ? info.meta.token ||
+            info.meta[tokenKey] ||
+            ('message' in info && info.message
+              ? info.message.token || info.message[tokenKey] || null
+              : null)
           : null),
       info.tokenParent ||
         info[tokenKeyParent] ||
         ('meta' in info
-          ? info.meta.tokenParent || info.meta[tokenKeyParent] || null
+          ? info.meta.tokenParent ||
+            info.meta[tokenKeyParent] ||
+            ('message' in info && info.message
+              ? info.message.tokenParent || info.message[tokenKeyParent] || null
+              : null)
           : null),
       'meta' in info ? info.meta.expressRoute : null,
       'meta' in info ? info.meta.expressMethod : null,
@@ -152,6 +168,7 @@ export class PostgresTransport extends Transport {
           message,
           transaction_duration,
           transaction_success,
+          transaction_id,
           stack,
           full_stack,
           token,
@@ -162,7 +179,7 @@ export class PostgresTransport extends Transport {
           express_origin,
           env,
           service
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
         parameters
       )
       .then(() => {

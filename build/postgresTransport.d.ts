@@ -5,6 +5,7 @@ export declare class PostgresTransport extends Transport {
     client: Client;
     constructor(opts: {});
     log(pInfo: {
+        transactionId?: string;
         type: string;
         duration?: number;
         success?: boolean;
@@ -16,6 +17,7 @@ export declare class PostgresTransport extends Transport {
             [key: string]: string;
         };
         meta: {
+            transactionId?: string;
             expressRoute?: string;
             expressMethod?: string;
             expressQuery?: {};

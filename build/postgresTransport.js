@@ -62,17 +62,31 @@ class PostgresTransport extends Transport {
             null,
             info.duration || ('meta' in info ? info.meta.duration : 0) || 0,
             info.success || null,
+            info.transactionId ||
+                ('meta' in info && info.meta && 'transactionId' in info.meta
+                    ? info.meta.transactionId
+                    : 'message' in info && info.message && 'transactionId' in info.message
+                        ? info.message.transactionId
+                        : 'unknown'),
             lightStack || null,
             fullStack || null,
             info.token ||
                 info[index_1.tokenKey] ||
                 ('meta' in info
-                    ? info.meta.token || info.meta[index_1.tokenKey] || null
+                    ? info.meta.token ||
+                        info.meta[index_1.tokenKey] ||
+                        ('message' in info && info.message
+                            ? info.message.token || info.message[index_1.tokenKey] || null
+                            : null)
                     : null),
             info.tokenParent ||
                 info[index_1.tokenKeyParent] ||
                 ('meta' in info
-                    ? info.meta.tokenParent || info.meta[index_1.tokenKeyParent] || null
+                    ? info.meta.tokenParent ||
+                        info.meta[index_1.tokenKeyParent] ||
+                        ('message' in info && info.message
+                            ? info.message.tokenParent || info.message[index_1.tokenKeyParent] || null
+                            : null)
                     : null),
             'meta' in info ? info.meta.expressRoute : null,
             'meta' in info ? info.meta.expressMethod : null,
@@ -105,6 +119,7 @@ class PostgresTransport extends Transport {
           message,
           transaction_duration,
           transaction_success,
+          transaction_id,
           stack,
           full_stack,
           token,
@@ -115,7 +130,7 @@ class PostgresTransport extends Transport {
           express_origin,
           env,
           service
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`, parameters)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`, parameters)
             .then(() => {
             if (callback) {
                 callback();
