@@ -149,15 +149,6 @@ export class PostgresTransport extends Transport {
       process.env.SERVICE_NAME || 'unknown',
     ];
 
-    console.log(
-      info.token,
-      info[tokenKey],
-      'meta' in info ? info.meta.token || info.meta[tokenKey] : 'meta-unknown',
-      'message' in info && info.message && typeof info.message === 'object'
-        ? info.message.token || info.message[tokenKey] || null
-        : 'message-unknown'
-    );
-
     [
       'type',
       'duration',
