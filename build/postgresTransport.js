@@ -56,48 +56,46 @@ class PostgresTransport extends Transport {
             info.type ||
                 ('meta' in info && info.meta && 'type' in info.meta
                     ? info.meta.type
-                    : 'message' in info &&
-                        info.message &&
-                        typeof info.message === 'object' &&
-                        'type' in info.message
-                        ? info.message.type
-                        : 'unknown'),
+                    : undefined) ||
+                ('message' in info &&
+                    info.message &&
+                    typeof info.message === 'object' &&
+                    'type' in info.message
+                    ? info.message.type
+                    : undefined) ||
+                'unknown',
             null,
             info.duration || ('meta' in info ? info.meta.duration : 0) || 0,
             info.success || null,
             info.transactionId ||
                 ('meta' in info && info.meta && 'transactionId' in info.meta
                     ? info.meta.transactionId
-                    : 'message' in info &&
-                        info.message &&
-                        typeof info.message === 'object' &&
-                        'transactionId' in info.message
-                        ? info.message.transactionId
-                        : null),
+                    : undefined) ||
+                ('message' in info &&
+                    info.message &&
+                    typeof info.message === 'object' &&
+                    'transactionId' in info.message
+                    ? info.message.transactionId
+                    : undefined) ||
+                null,
             lightStack || null,
             fullStack || null,
             info.token ||
                 info[index_1.tokenKey] ||
-                ('meta' in info
-                    ? info.meta.token ||
-                        info.meta[index_1.tokenKey] ||
-                        ('message' in info &&
-                            info.message &&
-                            typeof info.message === 'object'
-                            ? info.message.token || info.message[index_1.tokenKey] || null
-                            : null)
-                    : null),
+                ('meta' in info ? info.meta.token || info.meta[index_1.tokenKey] : undefined) ||
+                ('message' in info && info.message && typeof info.message === 'object'
+                    ? info.message.token || info.message[index_1.tokenKey] || null
+                    : undefined) ||
+                null,
             info.tokenParent ||
                 info[index_1.tokenKeyParent] ||
                 ('meta' in info
-                    ? info.meta.tokenParent ||
-                        info.meta[index_1.tokenKeyParent] ||
-                        ('message' in info &&
-                            info.message &&
-                            typeof info.message === 'object'
-                            ? info.message.tokenParent || info.message[index_1.tokenKeyParent] || null
-                            : null)
-                    : null),
+                    ? info.meta.tokenParent || info.meta[index_1.tokenKeyParent]
+                    : undefined) ||
+                ('message' in info && info.message && typeof info.message === 'object'
+                    ? info.message.tokenParent || info.message[index_1.tokenKeyParent]
+                    : undefined) ||
+                null,
             'meta' in info ? info.meta.expressRoute : null,
             'meta' in info ? info.meta.expressMethod : null,
             'meta' in info ? info.meta.expressQuery : null,
@@ -105,6 +103,9 @@ class PostgresTransport extends Transport {
             process.env.NODE_ENV || 'unknown',
             process.env.SERVICE_NAME || 'unknown',
         ];
+        console.log(info.token, info[index_1.tokenKey], 'meta' in info ? info.meta.token || info.meta[index_1.tokenKey] : 'meta-unknown', 'message' in info && info.message && typeof info.message === 'object'
+            ? info.message.token || info.message[index_1.tokenKey] || null
+            : 'message-unknown');
         [
             'type',
             'duration',
