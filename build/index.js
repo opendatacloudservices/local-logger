@@ -143,7 +143,7 @@ const startSpan = (message) => {
     };
     logger.info(meta);
     return (success, message) => {
-        const log = message ? { ...message, ...meta } : meta;
+        const log = message ? { message, ...meta } : meta;
         log.end = new Date();
         log.duration = log.end.getTime() - log.start.getTime();
         log.success = success;

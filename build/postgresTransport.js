@@ -4,6 +4,7 @@ exports.PostgresTransport = void 0;
 const Transport = require("winston-transport");
 const pg_1 = require("pg");
 const index_1 = require("./index");
+const flatted_1 = require("flatted");
 class PostgresTransport extends Transport {
     constructor(opts) {
         super(opts);
@@ -25,7 +26,7 @@ class PostgresTransport extends Transport {
     }
     log(pInfo, callback) {
         // creating a copy of the original message to make sure, transactions stay alive
-        const info = JSON.parse(JSON.stringify(pInfo));
+        const info = flatted_1.parse(flatted_1.stringify(pInfo));
         setImmediate(() => {
             this.emit('logged', info);
         });

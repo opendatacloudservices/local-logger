@@ -185,7 +185,7 @@ export const startSpan = (message: {}) => {
   };
   logger.info(meta);
   return (success: boolean, message?: {}): void => {
-    const log = message ? {...message, ...meta} : meta;
+    const log = message ? {message, ...meta} : meta;
 
     log.end = new Date();
     log.duration = log.end.getTime() - log.start.getTime();

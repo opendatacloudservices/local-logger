@@ -1,6 +1,7 @@
 import * as Transport from 'winston-transport';
 import {Client} from 'pg';
 import {tokenKey, tokenKeyParent} from './index';
+import {parse, stringify} from 'flatted';
 
 export class PostgresTransport extends Transport {
   client: Client;
@@ -66,7 +67,7 @@ export class PostgresTransport extends Transport {
     callback: Function | null
   ) {
     // creating a copy of the original message to make sure, transactions stay alive
-    const info = JSON.parse(JSON.stringify(pInfo));
+    const info = parse(stringify(pInfo));
 
     setImmediate(() => {
       this.emit('logged', info);
