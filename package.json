@@ -7,6 +7,10 @@
   "jest": {
     "testEnvironment": "node"
   },
+  "engines" : { 
+    "npm" : ">=8.4.1",
+    "node" : ">=17.5.0"
+  },
   "scripts": {
     "test": "jest test/test.js --runInBand --forceExit",
     "check": "gts check src/**/*.ts src/*.ts",
