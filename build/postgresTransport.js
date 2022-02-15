@@ -26,7 +26,7 @@ class PostgresTransport extends Transport {
     }
     log(pInfo, callback) {
         // creating a copy of the original message to make sure, transactions stay alive
-        const info = flatted_1.parse(flatted_1.stringify(pInfo));
+        const info = (0, flatted_1.parse)((0, flatted_1.stringify)(pInfo));
         setImmediate(() => {
             this.emit('logged', info);
         });

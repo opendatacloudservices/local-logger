@@ -34,20 +34,20 @@ const tokenUrl = (id) => {
 exports.tokenUrl = tokenUrl;
 const addToken = (url, res) => {
     if (url.indexOf('?') > -1) {
-        url = url += '&' + exports.tokenUrl(res.locals[exports.tokenKey]);
+        url = url += '&' + (0, exports.tokenUrl)(res.locals[exports.tokenKey]);
     }
     else {
-        url = url += '?' + exports.tokenUrl(res.locals[exports.tokenKey]);
+        url = url += '?' + (0, exports.tokenUrl)(res.locals[exports.tokenKey]);
     }
     return url;
 };
 exports.addToken = addToken;
 const getToken = (req) => {
     if (req.query && req.query[exports.tokenKey]) {
-        return req.query[exports.tokenKey] || exports.uuid();
+        return req.query[exports.tokenKey] || (0, exports.uuid)();
     }
     else {
-        return exports.uuid();
+        return (0, exports.uuid)();
     }
 };
 exports.getToken = getToken;
@@ -68,7 +68,7 @@ const tokenRoute = (req, res, next) => {
     if (!('query' in req) || !req.query) {
         req.query = {};
     }
-    req.query[exports.tokenKey] = exports.uuid();
+    req.query[exports.tokenKey] = (0, exports.uuid)();
     res.locals[exports.tokenKey] = req.query[exports.tokenKey];
     if (!('start' in res.locals) || !res.locals.start) {
         res.locals.start = new Date().getTime();
@@ -113,7 +113,7 @@ exports.logRoute = express.logger({
     baseMeta: {
         type: 'express-logRoute',
     },
-    dynamicMeta: (req, res) => exports.dynamicMeta(req, res),
+    dynamicMeta: (req, res) => (0, exports.dynamicMeta)(req, res),
 });
 exports.logRouteError = express.errorLogger({
     transports: [transport],
@@ -121,7 +121,7 @@ exports.logRouteError = express.errorLogger({
     baseMeta: {
         type: 'express-logRouteError',
     },
-    dynamicMeta: (req, res) => exports.dynamicMeta(req, res),
+    dynamicMeta: (req, res) => (0, exports.dynamicMeta)(req, res),
 });
 const logInfo = (message) => {
     logger.info({ ...message, type: 'info' });
@@ -138,7 +138,7 @@ const startSpan = (message) => {
         start: new Date(),
         end: new Date(),
         duration: 0,
-        transactionId: exports.uuid(),
+        transactionId: (0, exports.uuid)(),
         success: false,
     };
     logger.info(meta);
@@ -159,6 +159,6 @@ const startSpan = (message) => {
 exports.startSpan = startSpan;
 // span and transaction are handled equally and stored as type=transaction
 exports.startTransaction = exports.startSpan;
-const uuid = () => uuid_1.v1();
+const uuid = () => (0, uuid_1.v1)();
 exports.uuid = uuid;
 //# sourceMappingURL=index.js.map
